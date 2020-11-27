@@ -1,0 +1,16 @@
+image: 'docker:latest'
+{% if os_name == 'linux' %}
+extra_hosts:
+  - "host.docker.internal:{{ le_net_gw }}"
+{% endif %}
+volumes:
+  - '/var/run/docker.sock:/var/run/docker.sock'
+{% if os_name == 'linux' %}
+  - '/etc/hosts:/etc/hosts.docker'
+{% endif %}
+{% if os_name == 'darwin' %}
+  - '/private/etc/hosts:/etc/hosts.docker'
+{% endif %}
+{% if os_name == 'wsl' %}
+  - '/mnt/c/Windows/System32/Drivers/etc/hosts:/etc/hosts.docker'
+{% endif %}

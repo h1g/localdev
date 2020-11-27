@@ -1,0 +1,19 @@
+docker-bootstrap-deploy :=docker run --rm -v '/var/run/docker.sock:/var/run/docker.sock' -v '{{ work_dir }}:{{ work_dir }}' -e 'PWD={{ work_dir  }}'  -v '{{ home_dir }}/.ssh:{{ home_dir }}/.ssh' 
+ifdef SSH_AUTH_SOCK
+docker-bootstrap-deploy +=-e SSH_AUTH_SOCK=${SSH_AUTH_SOCK} -e SSH_AGENT_PID=${SSH_AGENT_PID} -v '${SSH_AUTH_SOCK}:${SSH_AUTH_SOCK}'
+endif
+docker-bootstrap-deploy +=localenv
+
+{% for project_file in lookup('fileglob',work_dir + '/projects/*.yml',wantlist=True) %}
+{% set project_data  = lookup('file',project_file)|from_yaml %}
+{% set project       = project_file|basename|regex_replace('\\.yml','') %}
+{% for repo_name in project_data.keys() if project_data[repo_name] is mapping %}
+{% set project_name  = project + '-' + repo_name %}
+{% set infra_dir   = infras_dir + '/' + project_name %}
+deploy-{{ project_name }}:
+	@mkdir -p {{ infra_dir }}
+	@$(docker-bootstrap-deploy) ansible-playbook -i {{ playbook_dir }}/inventory {{ playbook_dir }}/localenv.yml --extra-vars='project={{ project }} repo_name={{ repo_name }}'
+	@make -C {{ infra_dir }} {{ project_name }}-deploy
+-include {{ infra_dir }}/Makefile
+{% endfor %}
+{% endfor %}
