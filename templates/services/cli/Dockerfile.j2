@@ -80,15 +80,17 @@ RUN mkdir -p {{ cache_dir|regex_replace('.*\\:','') }}
 {% endif %}
 
 {% if tech in ['ruby'] %}
-#Секция для технологий: ruby и md
-ENV GEM_HOME={{ home_dir }}/.gem
-ENV GEM_PATH={{ home_dir }}/.gem
-ENV PATH=$PATH':{{ home_dir }}/.gem/bin/'
+#Секция для технологий: ruby
+ENV GEM_HOME {{ home_dir }}/.gem
+ENV GEM_PATH {{ home_dir }}/.gem
+ENV PATH $PATH':{{ home_dir }}/.gem/bin/'
 {% endif %}
-
 {% if tech == 'nodejs' %}
 #Секция для технологии: nodejs
 ENV NPM_CONFIG_LOGLEVEL info
 RUN npm install -g gulp-cli
 RUN npm install -g npm-cli-login
+{% endif %}
+{% if tech in ['python'] %}
+ENV PATH "{{ home_dir }}/.local/bin:$PATH"
 {% endif %}
