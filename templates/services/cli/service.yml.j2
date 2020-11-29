@@ -19,6 +19,7 @@ volumes:
 {% if project_name in [ 'localenv-dev' ] %}
   - /var/run/docker.sock:/var/run/docker.sock
   - '{{ home_dir }}/.docker:{{ home_dir }}/.docker'
+  - '{{ work_dir }}/:{{ work_dir }}'
 {% endif %}
 {% if lookup('env','SSH_AUTH_SOCK')|default('')|length >0 %}
 environment:
