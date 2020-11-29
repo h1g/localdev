@@ -1,5 +1,5 @@
 image: 'nginx:latest'
 ports:
-  - "80:80"
+  - "127.0.0.1:80:80"
 depends_on:
   - {{ project_name }}-dns

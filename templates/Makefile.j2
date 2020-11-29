@@ -88,5 +88,5 @@ endif
 {% for service in services if service in services_ports.keys() %}
 {{ project_name }}-publish-{{ service }}:
 	@docker ps -q --filter "name=localenv-core-publish-{{ service }}" | grep -q . && docker stop localenv-core-publish-{{ service }} || true
-	@docker run -d --rm --name  localenv-core-publish-{{ service }} --publish {{ services_ports[service] }}:{{ services_ports[service] }} --network=localenv alpine/socat tcp-listen:{{ services_ports[service] }},fork,reuseaddr tcp-connect:{{ project_name }}-{{ service }}:{{ services_ports[service] }}
+	@docker run -d --rm --name  localenv-core-publish-{{ service }} --publish 127.0.0.1:{{ services_ports[service] }}:{{ services_ports[service] }} --network=localenv alpine/socat tcp-listen:{{ services_ports[service] }},fork,reuseaddr tcp-connect:{{ project_name }}-{{ service }}:{{ services_ports[service] }}
 {% endfor %}
