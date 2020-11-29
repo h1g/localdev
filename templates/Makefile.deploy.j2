@@ -19,7 +19,7 @@ endif
 {% set infra_dir   = infras_dir + '/' + project_name %}
 deploy-{{ project_name }}:
 	@mkdir -p {{ infra_dir }}
-	$(docker-wrapper-deploy) ansible-playbook -i inventory localenv.yml --extra-vars='project={{ project }} repo_name={{ repo_name }}'
+	@$(docker-wrapper-deploy) ansible-playbook -i inventory localenv.yml --extra-vars='project={{ project }} repo_name={{ repo_name }}'
 	@make -C {{ infra_dir }} {{ project_name }}-deploy
 -include {{ infra_dir }}/Makefile
 {% endfor %}

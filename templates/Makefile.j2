@@ -29,8 +29,8 @@ endif
 {% endif %}
 
 {{ project_name }}-deploy-render:
-	$(docker-wrapper-{{ project_name }}) docker-compose -f {{ infra_dir }}/docker-compose.yml ps -q|wc -l|grep -qv 0 && $(docker-wrapper-{{ project_name }}) docker-compose -f {{ infra_dir }}/docker-compose.yml down --remove-orphans || true
-	$(docker-wrapper-{{ project_name }}) ansible-playbook -i inventory localenv.yml --extra-vars='project={{ project }} repo_name={{ repo_name }}'
+	@$(docker-wrapper-{{ project_name }}) docker-compose -f {{ infra_dir }}/docker-compose.yml ps -q|wc -l|grep -qv 0 && $(docker-wrapper-{{ project_name }}) docker-compose -f {{ infra_dir }}/docker-compose.yml down --remove-orphans || true
+	@$(docker-wrapper-{{ project_name }}) ansible-playbook -i inventory localenv.yml --extra-vars='project={{ project }} repo_name={{ repo_name }}'
 
 {% if tech != 'service' %}
 {{ project_name }}-deploy-sources:
