@@ -94,4 +94,9 @@ RUN npm install -g npm-cli-login
 {% endif %}
 {% if tech in ['python'] %}
 ENV PATH "{{ home_dir }}/.local/bin:$PATH"
+ENV ANSIBLE_DISPLAY_SKIPPED_HOSTS false
+ENV PY_COLORS 1
+ENV ANSIBLE_FORCE_COLOR 1
+ENV OS_NAME {{ os_name }}
+ENV LE_NET_GW {{ le_net_gw }}
 {% endif %}

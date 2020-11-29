@@ -1,16 +1,15 @@
 {% if project_name != 'localenv-dev' %}
-ifeq (,$(shell docker inspect localenv-dev-cli |grep running))
+localdev_{{ project_name }} := $(shell docker ps | grep -c localenv-dev-cli)
+ifeq ($(localdev_{{ project_name }}),0)
 {% endif %}
-docker-wrapper-{{ project_name }}   :=docker run --rm -v '/var/run/docker.sock:/var/run/docker.sock' -v '{{ work_dir }}:{{ work_dir }}' -e 'PWD={{ work_dir  }}' -v '{{ home_dir }}/.ssh:{{ home_dir }}/.ssh'{% if  cache_dir is defined %} -v '{{ cache_dir }}' {% endif %}
-
+docker-wrapper-{{ project_name }}   :=docker run --rm -v '/var/run/docker.sock:/var/run/docker.sock' -v '{{ work_dir }}:{{ work_dir }}' -e 'PWD={{ work_dir  }}'{% if  cache_dir is defined %} -v '{{ cache_dir }}' {% endif %}{% if project_name == 'localenv-dev'  %} -v '{{ source_dir }}:/ansible' {% endif %} -v '{{ home_dir }}/.ssh:{{ home_dir }}/.ssh'
 ifdef SSH_AUTH_SOCK
 docker-wrapper-{{ project_name }} +=-e SSH_AUTH_SOCK=${SSH_AUTH_SOCK} -e SSH_AGENT_PID=${SSH_AGENT_PID} -v '${SSH_AUTH_SOCK}:${SSH_AUTH_SOCK}'
 endif
 docker-wrapper-{{ project_name }} +=localenv
-
 {% if project_name != 'localenv-dev' %}
 else
-export docker-wrapper-{{ project_name }} :=docker exec localenv-dev-cli
+export docker-wrapper-{{ project_name }} :=docker exec -w /var/www -e WORK_DIR={{ work_dir  }} localenv-dev-cli
 endif
 {% endif %}
 
@@ -26,12 +25,12 @@ endif
 
 {% if cache_dir is defined %}
 {{ project_name }}-cache-dir:
-	@mkdir -p {{ cache_dir|regex_replace('\\:.*','') }}
+	@$(docker-wrapper-{{ project_name }}) mkdir -p {{ cache_dir|regex_replace('\\:.*','') }}
 {% endif %}
 
 {{ project_name }}-deploy-render:
-	@$(docker-wrapper-{{ project_name }}) docker-compose -f {{ infra_dir }}/docker-compose.yml ps -q|wc -l|grep -qv 0 && $(docker-wrapper-{{ project_name }}) docker-compose -f {{ infra_dir }}/docker-compose.yml down --remove-orphans || true
-	@$(docker-wrapper-{{ project_name }}) ansible-playbook -i {{ playbook_dir }}/inventory {{ playbook_dir }}/localenv.yml --extra-vars='project={{ project }} repo_name={{ repo_name }}'
+	$(docker-wrapper-{{ project_name }}) docker-compose -f {{ infra_dir }}/docker-compose.yml ps -q|wc -l|grep -qv 0 && $(docker-wrapper-{{ project_name }}) docker-compose -f {{ infra_dir }}/docker-compose.yml down --remove-orphans || true
+	$(docker-wrapper-{{ project_name }}) ansible-playbook -i inventory localenv.yml --extra-vars='project={{ project }} repo_name={{ repo_name }}'
 
 {% if tech != 'service' %}
 {{ project_name }}-deploy-sources:
@@ -52,8 +51,8 @@ else
 	@$(docker-wrapper-{{ project_name }}) git clone --branch {{ config_branch }} {{ config_repo }} {{ config_dir }}
 endif
 {{ project_name }}-deploy-configs-link:
-	@$(docker-wrapper-{{ project_name }}) ansible-playbook -i {{ playbook_dir }}/inventory {{ playbook_dir }}/configs.yml --extra-vars='project={{ project }} repo_name={{ repo_name }} type=parent'
-	@$(docker-wrapper-{{ project_name }}) ansible-playbook -i {{ playbook_dir }}/inventory {{ playbook_dir }}/configs.yml --extra-vars='project={{ project }} repo_name={{ repo_name }} type=current'
+	@$(docker-wrapper-{{ project_name }}) ansible-playbook -i inventory configs.yml --extra-vars='project={{ project }} repo_name={{ repo_name }} type=parent'
+	@$(docker-wrapper-{{ project_name }}) ansible-playbook -i inventory configs.yml --extra-vars='project={{ project }} repo_name={{ repo_name }} type=current'
 {% endif %}
 {{ project_name }}-deploy-build:	{{ project_name }}-deploy-build-images{% if 'cli' in services %} {{ project_name }}-deploy-build-app{% endif %}
 
