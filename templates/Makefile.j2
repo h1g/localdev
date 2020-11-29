@@ -1,16 +1,25 @@
-docker-wreapper-{{ project_name }}   :=docker run --rm -v '/var/run/docker.sock:/var/run/docker.sock' -v '{{ work_dir }}:{{ work_dir }}' -e 'PWD={{ work_dir  }}' -v '{{ home_dir }}/.ssh:{{ home_dir }}/.ssh'{% if  cache_dir is defined %} -v '{{ cache_dir }}' {% endif %}
+{% if project_name != 'localenv-dev' %}
+ifeq (,$(shell docker inspect localenv-dev-cli |grep running))
+{% endif %}
+docker-wrapper-{{ project_name }}   :=docker run --rm -v '/var/run/docker.sock:/var/run/docker.sock' -v '{{ work_dir }}:{{ work_dir }}' -e 'PWD={{ work_dir  }}' -v '{{ home_dir }}/.ssh:{{ home_dir }}/.ssh'{% if  cache_dir is defined %} -v '{{ cache_dir }}' {% endif %}
 
 ifdef SSH_AUTH_SOCK
-docker-wreapper-{{ project_name }} +=-e SSH_AUTH_SOCK=${SSH_AUTH_SOCK} -e SSH_AGENT_PID=${SSH_AGENT_PID} -v '${SSH_AUTH_SOCK}:${SSH_AUTH_SOCK}'
+docker-wrapper-{{ project_name }} +=-e SSH_AUTH_SOCK=${SSH_AUTH_SOCK} -e SSH_AGENT_PID=${SSH_AGENT_PID} -v '${SSH_AUTH_SOCK}:${SSH_AUTH_SOCK}'
 endif
-docker-wreapper-{{ project_name }} +=localenv
+docker-wrapper-{{ project_name }} +=localenv
+
+{% if project_name != 'localenv-dev' %}
+else
+export docker-wrapper-{{ project_name }} :=docker exec localenv-dev-cli
+endif
+{% endif %}
 
 {{ project_name }}-images-pull:
-	@$(docker-wreapper-{{ project_name }}) docker-compose -f {{ infra_dir }}/docker-compose.yml pull
+	@$(docker-wrapper-{{ project_name }}) docker-compose -f {{ infra_dir }}/docker-compose.yml pull
 {{ project_name }}-up:
-	@$(docker-wreapper-{{ project_name }}) docker-compose -f {{ infra_dir }}/docker-compose.yml up -d
+	@$(docker-wrapper-{{ project_name }}) docker-compose -f {{ infra_dir }}/docker-compose.yml up -d
 {{ project_name }}-down:
-	@$(docker-wreapper-{{ project_name }}) docker-compose -f {{ infra_dir }}/docker-compose.yml down
+	@$(docker-wrapper-{{ project_name }}) docker-compose -f {{ infra_dir }}/docker-compose.yml down
 {{ project_name }}-restart:  {{ project_name }}-down  {{ project_name }}-up
 
 {{ project_name }}-deploy:	{% if cache_dir is defined %}{{ project_name }}-cache-dir {% endif %}{{ project_name }}-deploy-render{% if tech != 'service' %}	{{ project_name }}-deploy-sources{% endif %}{% if configs %}	{{ project_name }}-deploy-configs{% endif %}	{{ project_name }}-deploy-build	{{ project_name }}-up
@@ -21,42 +30,42 @@ docker-wreapper-{{ project_name }} +=localenv
 {% endif %}
 
 {{ project_name }}-deploy-render:
-	@$(docker-wreapper-{{ project_name }}) docker-compose -f {{ infra_dir }}/docker-compose.yml ps -q|wc -l|grep -qv 0 && $(docker-wreapper-{{ project_name }}) docker-compose -f {{ infra_dir }}/docker-compose.yml down --remove-orphans || true
-	@$(docker-wreapper-{{ project_name }}) ansible-playbook -i {{ playbook_dir }}/inventory {{ playbook_dir }}/localenv.yml --extra-vars='project={{ project }} repo_name={{ repo_name }}'
+	@$(docker-wrapper-{{ project_name }}) docker-compose -f {{ infra_dir }}/docker-compose.yml ps -q|wc -l|grep -qv 0 && $(docker-wrapper-{{ project_name }}) docker-compose -f {{ infra_dir }}/docker-compose.yml down --remove-orphans || true
+	@$(docker-wrapper-{{ project_name }}) ansible-playbook -i {{ playbook_dir }}/inventory {{ playbook_dir }}/localenv.yml --extra-vars='project={{ project }} repo_name={{ repo_name }}'
 
 {% if tech != 'service' %}
 {{ project_name }}-deploy-sources:
 ifneq ($(wildcard {{ source_dir + '/.git' }}),)
-	@$(docker-wreapper-{{ project_name }}) git -C {{ source_dir }} pull origin {{ source_branch }}
-	@$(docker-wreapper-{{ project_name }}) git -C {{ source_dir }} checkout {{ source_branch }}
+	@$(docker-wrapper-{{ project_name }}) git -C {{ source_dir }} pull origin {{ source_branch }}
+	@$(docker-wrapper-{{ project_name }}) git -C {{ source_dir }} checkout {{ source_branch }}
 else
-	@$(docker-wreapper-{{ project_name }}) git clone --branch {{ source_branch }} {{ source_repo }} {{ source_dir }}
+	@$(docker-wrapper-{{ project_name }}) git clone --branch {{ source_branch }} {{ source_repo }} {{ source_dir }}
 endif
 {% endif %}
 {% if configs %}
 {{ project_name }}-deploy-configs:	{{ project_name }}-deploy-configs-get	{{ project_name }}-deploy-configs-link
 {{ project_name }}-deploy-configs-get:
 ifneq ($(wildcard {{ config_dir + '/.git' }}),)
-	@$(docker-wreapper-{{ project_name }}) git -C {{ config_dir }} pull origin {{ config_branch }}
-	@$(docker-wreapper-{{ project_name }}) git -C {{ config_dir }} checkout {{ config_branch }}
+	@$(docker-wrapper-{{ project_name }}) git -C {{ config_dir }} pull origin {{ config_branch }}
+	@$(docker-wrapper-{{ project_name }}) git -C {{ config_dir }} checkout {{ config_branch }}
 else
-	@$(docker-wreapper-{{ project_name }}) git clone --branch {{ config_branch }} {{ config_repo }} {{ config_dir }}
+	@$(docker-wrapper-{{ project_name }}) git clone --branch {{ config_branch }} {{ config_repo }} {{ config_dir }}
 endif
 {{ project_name }}-deploy-configs-link:
-	@$(docker-wreapper-{{ project_name }}) ansible-playbook -i {{ playbook_dir }}/inventory {{ playbook_dir }}/configs.yml --extra-vars='project={{ project }} repo_name={{ repo_name }} type=parent'
-	@$(docker-wreapper-{{ project_name }}) ansible-playbook -i {{ playbook_dir }}/inventory {{ playbook_dir }}/configs.yml --extra-vars='project={{ project }} repo_name={{ repo_name }} type=current'
+	@$(docker-wrapper-{{ project_name }}) ansible-playbook -i {{ playbook_dir }}/inventory {{ playbook_dir }}/configs.yml --extra-vars='project={{ project }} repo_name={{ repo_name }} type=parent'
+	@$(docker-wrapper-{{ project_name }}) ansible-playbook -i {{ playbook_dir }}/inventory {{ playbook_dir }}/configs.yml --extra-vars='project={{ project }} repo_name={{ repo_name }} type=current'
 {% endif %}
 {{ project_name }}-deploy-build:	{{ project_name }}-deploy-build-images{% if 'cli' in services %} {{ project_name }}-deploy-build-app{% endif %}
 
 {{ project_name }}-deploy-build-images:
-	@$(docker-wreapper-{{ project_name }}) docker-compose -f {{ infra_dir }}/docker-compose.yml down
-	@$(docker-wreapper-{{ project_name }}) docker-compose -f {{ infra_dir }}/docker-compose.yml build
+	@$(docker-wrapper-{{ project_name }}) docker-compose -f {{ infra_dir }}/docker-compose.yml down
+	@$(docker-wrapper-{{ project_name }}) docker-compose -f {{ infra_dir }}/docker-compose.yml build
 
 {% if 'cli' in services %}
 {{ project_name }}-deploy-build-app:
-	@$(docker-wreapper-{{ project_name }}) docker-compose -f {{ infra_dir }}/docker-compose.yml up -d {{ project_name }}-cli
+	@$(docker-wrapper-{{ project_name }}) docker-compose -f {{ infra_dir }}/docker-compose.yml up -d {{ project_name }}-cli
 	@docker exec {{ project_name }}-cli /build.sh
-	@$(docker-wreapper-{{ project_name }}) docker-compose -f {{ infra_dir }}/docker-compose.yml up -d
+	@$(docker-wrapper-{{ project_name }}) docker-compose -f {{ infra_dir }}/docker-compose.yml up -d
 {{ project_name }}-exec:
 	@docker exec -ti {{ project_name }}-cli bash -l
 {% endif %}
