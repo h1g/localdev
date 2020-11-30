@@ -1,17 +1,12 @@
-{% if project_name != 'localenv-dev' %}
-localdev_{{ project_name }} := $(shell docker ps | grep -c localenv-dev-cli)
-ifeq ($(localdev_{{ project_name }}),0)
-{% endif %}
-docker-wrapper-{{ project_name }}   :=docker run --rm -v '/var/run/docker.sock:/var/run/docker.sock' -v '{{ work_dir }}:{{ work_dir }}' -e 'PWD={{ work_dir  }}'{% if  cache_dir is defined %} -v '{{ cache_dir }}' {% endif %}{% if project_name == 'localenv-dev'  %} -v '{{ source_dir }}:/ansible' {% endif %} -v '{{ home_dir }}/.ssh:{{ home_dir }}/.ssh'
+docker-wrapper-{{ project_name }}   :=docker run --rm -v '/var/run/docker.sock:/var/run/docker.sock' -v '{{ work_dir }}:{{ work_dir }}' -e 'WORK_DIR={{ work_dir  }}'{% if  cache_dir is defined %} -v '{{ cache_dir }}' {% endif %} -v '{{ home_dir }}/.ssh:{{ home_dir }}/.ssh'
+is-localdev := $(wildcard {{ sources_dir + '/localenv-dev' }})
+ifneq ($(strip $(is-localdev)),)
+docker-wrapper-{{ project_name }} +=-v '{{ sources_dir}}/localenv-dev:/ansible'
+endif
 ifdef SSH_AUTH_SOCK
 docker-wrapper-{{ project_name }} +=-e SSH_AUTH_SOCK=${SSH_AUTH_SOCK} -e SSH_AGENT_PID=${SSH_AGENT_PID} -v '${SSH_AUTH_SOCK}:${SSH_AUTH_SOCK}'
 endif
 docker-wrapper-{{ project_name }} +=localenv
-{% if project_name != 'localenv-dev' %}
-else
-export docker-wrapper-{{ project_name }} :=docker exec -w /var/www -e WORK_DIR={{ work_dir  }} localenv-dev-cli
-endif
-{% endif %}
 
 {{ project_name }}-images-pull:
 	@$(docker-wrapper-{{ project_name }}) docker-compose -f {{ infra_dir }}/docker-compose.yml pull
@@ -22,6 +17,7 @@ endif
 {{ project_name }}-restart:  {{ project_name }}-down  {{ project_name }}-up
 
 {{ project_name }}-deploy:	{% if cache_dir is defined %}{{ project_name }}-cache-dir {% endif %}{{ project_name }}-deploy-render{% if tech != 'service' %}	{{ project_name }}-deploy-sources{% endif %}{% if configs %}	{{ project_name }}-deploy-configs{% endif %}	{{ project_name }}-deploy-build	{{ project_name }}-up
+{{ project_name }}-bootstrap:	{% if cache_dir is defined %}{{ project_name }}-cache-dir {% endif %}{% if tech != 'service' %}	{{ project_name }}-deploy-sources{% endif %}{% if configs %}	{{ project_name }}-deploy-configs{% endif %}	{{ project_name }}-deploy-build	{{ project_name }}-up
 
 {% if cache_dir is defined %}
 {{ project_name }}-cache-dir:

@@ -1,15 +1,12 @@
-localdev_deploy := $(shell docker ps | grep -c localenv-dev-cli)
-ifeq ($(localdev_deploy),0)
-docker-wrapper-deploy   :=docker run --rm -v '/var/run/docker.sock:/var/run/docker.sock' -v '{{ work_dir }}:{{ work_dir }}' -e 'PWD={{ work_dir  }}'{% if  cache_dir is defined %} -v '{{ cache_dir }}' {% endif %} -v '{{ home_dir }}/.ssh:{{ home_dir }}/.ssh'
-
+docker-wrapper-deploy   :=docker run --rm -v '/var/run/docker.sock:/var/run/docker.sock' -v '{{ work_dir }}:{{ work_dir }}' -e 'WORK_DIR={{ work_dir  }}'{% if  cache_dir is defined %} -v '{{ cache_dir }}' {% endif %} -v '{{ home_dir }}/.ssh:{{ home_dir }}/.ssh'
+is-localdev := $(wildcard {{ sources_dir + '/localenv-dev' }})
+ifneq ($(strip $(is-localdev)),)
+docker-wrapper-deploy +=-v '{{ sources_dir}}/localenv-dev:/ansible'
+endif
 ifdef SSH_AUTH_SOCK
 docker-wrapper-deploy +=-e SSH_AUTH_SOCK=${SSH_AUTH_SOCK} -e SSH_AGENT_PID=${SSH_AGENT_PID} -v '${SSH_AUTH_SOCK}:${SSH_AUTH_SOCK}'
 endif
 docker-wrapper-deploy +=localenv
-else
-export docker-wrapper-deploy :=docker exec -w /var/www -e WORK_DIR={{ work_dir  }} localenv-dev-cli
-endif
-
 
 {% for project_file in lookup('fileglob',work_dir + '/projects/*.yml',wantlist=True) %}
 {% set project_data  = lookup('file',project_file)|from_yaml %}
@@ -20,7 +17,7 @@ endif
 deploy-{{ project_name }}:
 	@mkdir -p {{ infra_dir }}
 	@$(docker-wrapper-deploy) ansible-playbook -i inventory localenv.yml --extra-vars='project={{ project }} repo_name={{ repo_name }}'
-	@make -C {{ infra_dir }} {{ project_name }}-deploy
+	@make -C {{ infra_dir }} {{ project_name }}-bootstrap
 -include {{ infra_dir }}/Makefile
 {% endfor %}
 {% endfor %}
