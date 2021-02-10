@@ -17,7 +17,7 @@ RUN if [ $(getent passwd {{ ansible_user_uid }}) ]; then usermod -d {{ home_dir 
     else useradd -m --home {{ home_dir }} -s /bin/bash {{ ansible_user }} --uid  {{ ansible_user_uid }} --gid  {{ ansible_user_gid }}; fi
 RUN echo "{{ ansible_user }} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/{{ ansible_user | regex_replace('\.','')}}
 
-{% if project_name in [ 'localenv-dev' ] %}
+{% if project_id in [ 'localenv-dev' ] %}
 RUN if [ $(getent group {{ docker_gid }}) ]; then groupmod -n docker -g {{ docker_gid }} $(getent group {{ docker_gid }}|cut -d ":" -f1); \
     else groupadd --gid {{ docker_gid }} docker; fi
 RUN usermod -aG docker {{ ansible_user }}

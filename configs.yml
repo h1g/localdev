@@ -1,12 +1,13 @@
-- name: "Sync type: {{ type }} configs project: {{ project_name }}"
+- name: "Sync type: {{ type }} configs project: {{ project_id }}"
   hosts: localhost
   gather_facts: false
   vars_files:
     - "{{ playbook_dir }}/vars/main.yml"
-    - "{{ playbook_dir }}/vars/localenv.yml"
+    - "{{ playbook_dir }}/vars/localdev.yml"
+    - "{{ work_dir }}/projects/localenv.yml"
     - "{{ work_dir }}/projects/{{ project }}.yml"
   tasks:
-    - name: "Get source branch for project: {{ project_name }}"
+    - name: "Get source branch for project: {{ project_id }}"
       shell: "git rev-parse --abbrev-ref HEAD"
       args:
         chdir: "{{ source_dir }}"
@@ -24,7 +25,7 @@
 
     - name: "Configs manupulation block"
       block:
-        - name: "Get configs file tree for project: {{ project_name }}"
+        - name: "Get configs file tree for project: {{ project_id }}"
           set_fact:
             configs_filetree:  "{{ lookup('filetree',config_dir + '/' + source_branch|default(config_parent)  + '/', wantlist=True )|reject('search','.parent|vault.yml')|list }}"
 

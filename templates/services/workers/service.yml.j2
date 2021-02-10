@@ -13,4 +13,4 @@ volumes:
 {% endif %}
 command: ["/usr/bin/supervisord", "-c", "/etc/supervisor/supervisord.conf"]
 depends_on:
-  - {{ project_name }}-cli
+  - {{ project_id }}-cli

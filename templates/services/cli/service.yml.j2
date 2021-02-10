@@ -16,7 +16,7 @@ volumes:
 {% if  cache_dir is defined %}
   - {{ cache_dir }}
 {% endif %}
-{% if project_name in [ 'localenv-dev' ] %}
+{% if project_id in [ 'localenv-dev' ] %}
   - /var/run/docker.sock:/var/run/docker.sock
   - '{{ home_dir }}/.docker:{{ home_dir }}/.docker'
   - '{{ work_dir }}/:{{ work_dir }}'
@@ -31,7 +31,7 @@ command: [ "bash" ]
 {% if loop.index == 1 %}
 depends_on:
 {% endif %}
-  - {{ project_name }}-{{ service }}
+  - {{ project_id }}-{{ service }}
 {% endfor %}
 stdin_open: true
 tty: true

@@ -15,4 +15,4 @@ volumes:
 {% endif %}
 command: ["php-fpm", "--nodaemonize"]
 depends_on:
-  - {{ project_name }}-cli
+  - {{ project_id }}-cli

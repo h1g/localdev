@@ -12,12 +12,12 @@ docker-wrapper-deploy +=localenv
 {% set project_data  = lookup('file',project_file)|from_yaml %}
 {% set project       = project_file|basename|regex_replace('\\.yml','') %}
 {% for repo_name in project_data.keys() if project_data[repo_name] is mapping %}
-{% set project_name  = project + '-' + repo_name %}
-{% set infra_dir   = infras_dir + '/' + project_name %}
-deploy-{{ project_name }}:
+{% set project_id  = project + '-' + repo_name %}
+{% set infra_dir   = infras_dir + '/' + project_id %}
+deploy-{{ project_id }}:
 	@mkdir -p {{ infra_dir }}
 	@$(docker-wrapper-deploy) ansible-playbook -i inventory localenv.yml --extra-vars='project={{ project }} repo_name={{ repo_name }}'
-	@make -C {{ infra_dir }} {{ project_name }}-bootstrap
+	@make -C {{ infra_dir }} {{ project_id }}-bootstrap
 -include {{ infra_dir }}/Makefile
 {% endfor %}
 {% endfor %}

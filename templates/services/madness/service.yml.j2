@@ -7,4 +7,4 @@ volumes:
   - {{ cache_dir }}
 command: ["$HOME/.gem/bin/madness","/var/www"]
 depends_on:
-  - {{ project_name }}-cli
+  - {{ project_id }}-cli

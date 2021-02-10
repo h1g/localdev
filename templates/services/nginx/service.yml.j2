@@ -3,5 +3,5 @@ volumes:
   - '{{ source_dir }}:/var/www'
 {% if 'cli' in services.keys() %}
 depends_on:
-  - {{ project_name }}-cli
+  - {{ project_id }}-cli
 {% endif %}

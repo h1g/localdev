@@ -3,7 +3,8 @@
   gather_facts: false
   vars_files:
     - "{{ playbook_dir }}/vars/main.yml"
-    - "{{ playbook_dir }}/vars/localenv.yml"
+    - "{{ playbook_dir }}/vars/localdev.yml"
+    - "{{ work_dir }}/projects/localenv.yml"
     - "{{ work_dir }}/projects/{{ project }}.yml"
   tasks:
     - name: "Extract variables for {{ project }} / {{ repo_name }}"
