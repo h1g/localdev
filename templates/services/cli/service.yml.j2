@@ -8,7 +8,11 @@ volumes:
   - '{{ home_dir }}/.ssh/:{{ home_dir }}/.ssh/'
   - '{{ home_dir }}/.gitconfig:{{ home_dir }}/.gitconfig'
 {% if lookup('env','SSH_AUTH_SOCK')|default('')|length >0 %}
-  - ${SSH_AUTH_SOCK}:${SSH_AUTH_SOCK}
+{% if os_name == 'wsl' %}
+  - ${SSH_AUTH_SOCK}:/run/host-services/ssh-auth.sock
+{% else %}
+  - /run/host-services/ssh-auth.sock:/run/host-services/ssh-auth.sock
+{% endif %}
 {% endif %}
 {% if configs %}
   - {{ config_dir }}:{{ config_dir }}
@@ -23,8 +27,7 @@ volumes:
 {% endif %}
 {% if lookup('env','SSH_AUTH_SOCK')|default('')|length >0 %}
 environment:
-  - SSH_AGENT_PID
-  - SSH_AUTH_SOCK
+  - SSH_AUTH_SOCK=/run/host-services/ssh-auth.sock
 {% endif %}
 command: [ "bash" ]
 {% for service in services.keys() if not (service in ['nginx','cli'] or (lookup('template', playbook_dir + '/templates/services/' + service + '/service.yml.j2')|from_yaml)['image']|default(services[service]['image']) ==  cli_image + '_' + project + '_' + repo_name) %}

@@ -4,8 +4,9 @@ ifneq ($(strip $(is-localdev)),)
 docker-wrapper-{{ project_id }} +=-v '{{ sources_dir}}/localenv-dev:/ansible'
 endif
 ifdef SSH_AUTH_SOCK
-docker-wrapper-{{ project_id }} +=-e SSH_AUTH_SOCK=${SSH_AUTH_SOCK} -e SSH_AGENT_PID=${SSH_AGENT_PID} -v '${SSH_AUTH_SOCK}:${SSH_AUTH_SOCK}'
+docker-wrapper-{{ project_id }} +=-e SSH_AUTH_SOCK=/run/host-services/ssh-auth.sock -v '/run/host-services/ssh-auth.sock:/run/host-services/ssh-auth.sock'
 endif
+
 docker-wrapper-{{ project_id }} +=localenv
 
 {{ project_id }}-images-pull:
@@ -34,7 +35,7 @@ ifneq ($(wildcard {{ source_dir + '/.git' }}),)
 	@$(docker-wrapper-{{ project_id }}) git -C {{ source_dir }} pull origin {{ source_branch }}
 	@$(docker-wrapper-{{ project_id }}) git -C {{ source_dir }} checkout {{ source_branch }}
 else
-	@$(docker-wrapper-{{ project_id }}) git clone --branch {{ source_branch }} {{ source_repo }} {{ source_dir }}
+	@git clone --branch {{ source_branch }} {{ source_repo }} {{ source_dir }}
 endif
 {% endif %}
 {% if configs %}
@@ -44,7 +45,7 @@ ifneq ($(wildcard {{ config_dir + '/.git' }}),)
 	@$(docker-wrapper-{{ project_id }}) git -C {{ config_dir }} pull origin {{ config_branch }}
 	@$(docker-wrapper-{{ project_id }}) git -C {{ config_dir }} checkout {{ config_branch }}
 else
-	@$(docker-wrapper-{{ project_id }}) git clone --branch {{ config_branch }} {{ config_repo }} {{ config_dir }}
+	@git clone --branch {{ config_branch }} {{ config_repo }} {{ config_dir }}
 endif
 {{ project_id }}-deploy-configs-link:
 	@$(docker-wrapper-{{ project_id }}) ansible-playbook -i inventory configs.yml --extra-vars='project={{ project }} repo_name={{ repo_name }} type=parent'
