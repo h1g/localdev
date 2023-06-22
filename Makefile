@@ -1,7 +1,2 @@
 build:
-	docker build --platform linux/arm64 -t gnovicov/localdev:arm64 .
-	docker build --platform linux/amd64 -t gnovicov/localdev:amd64 .
-
-push:
-	docker push gnovicov/localdev:arm64
-	docker push gnovicov/localdev:amd64
+	@docker buildx build --push --platform linux/arm64/v8,linux/amd64 --tag gnovicov/localdev:latest .
