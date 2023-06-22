@@ -1,6 +1,6 @@
 #!/bin/bash
 {% if 'workers' in services %}
-sudo ln -sf /var/www/config/supervisord.conf /etc/supervisor/supervisord.conf
+sudo ln -sf /app/config/supervisord.conf /etc/supervisor/supervisord.conf
 {% endif %}
 {% if build_command is defined %}
 {{ build_command }}

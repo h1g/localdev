@@ -2,7 +2,7 @@ server {
   listen 80;
   add_header 'Access-Control-Allow-Origin' '*';
   resolver 127.0.0.11 valid=1s;
-  root /var/www/public;
+  root /app/public;
   index index.php index.html;
 {% if tech == 'php' %}
   location / {

@@ -1,6 +1,6 @@
 image: 'nginx:latest'
 volumes:
-  - '{{ source_dir }}:/var/www'
+  - '{{ source_dir }}:/app'
 {% if 'cli' in services.keys() %}
 depends_on:
   - {{ project_id }}-cli

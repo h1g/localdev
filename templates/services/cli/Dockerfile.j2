@@ -34,9 +34,9 @@ COPY ./bashrc /bashrc
 RUN cat /bashrc >> {{ home_dir }}/.bashrc
 RUN rm /bashrc
 
-RUN mkdir -p /var/www
+RUN mkdir -p /app
 RUN chown -R {{ ansible_user }}:root /var/run/ /var/log/ /opt
-RUN chown -R {{ ansible_user }}:{{ ansible_user }} {{ home_dir }} /var/www
+RUN chown -R {{ ansible_user }}:{{ ansible_user }} {{ home_dir }} /app
 
 {% if 'workers' in services %}
 RUN apt-get install -y supervisor
@@ -73,7 +73,7 @@ RUN rm -rf /tmp/pear
 COPY ./build.sh /build.sh
 RUN chmod +x /build.sh
 
-WORKDIR /var/www
+WORKDIR /app
 USER {{ ansible_user }}
 
 #Устнавливаем agnoster-bash

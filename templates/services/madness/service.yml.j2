@@ -1,10 +1,10 @@
 image: "{{ cli_image + '_' + project + '_' + repo_name }}"
 volumes:
-  - '{{ source_dir }}:/var/www'
+  - '{{ source_dir }}:/app'
 {% if configs %}
   - {{ config_dir }}:{{ config_dir }}
 {% endif %}
   - {{ cache_dir }}
-command: ["$HOME/.gem/bin/madness","/var/www"]
+command: ["$HOME/.gem/bin/madness","/app"]
 depends_on:
   - {{ project_id }}-cli

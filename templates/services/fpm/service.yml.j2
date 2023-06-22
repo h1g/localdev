@@ -4,7 +4,7 @@ extra_hosts:
   - "host.docker.internal:{{ le_net_gw }}"
 {% endif %}
 volumes:
-  - '{{ source_dir }}:/var/www'
+  - '{{ source_dir }}:/app'
   - '{{ home_dir }}/.ssh/:{{ home_dir }}/.ssh/'
   - '{{ home_dir }}/.gitconfig:{{ home_dir }}/.gitconfig'
 {% if configs %}
