@@ -11,6 +11,6 @@ volumes:
 {% if  cache_dir is defined %}
   - {{ cache_dir }}
 {% endif %}
-command: ["/usr/bin/supervisord", "-c", "/etc/supervisor/supervisord.conf"]
+command: [ "bash", "-c", "php artisan horizon" ]
 depends_on:
   - {{ project_id }}-cli
