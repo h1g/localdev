@@ -69,9 +69,9 @@ endif
 {{ project_id }}-exec-redis-cli:
 	@docker exec -ti {{ project_id }}-redis redis-cli
 {% endif %}
-{% if 'workers' in services %}
-{{ project_id }}-exec-workers:
-	@docker exec -ti {{ project_id }}-workers bash -l
+{% if 'harizon' in services %}
+{{ project_id }}-exec-horizon:
+	@docker exec -ti {{ project_id }}-horizon bash -l
 {% endif %}
 {% if 'runner' in services %}
 {{ project_id }}-exec-runner:
